@@ -1,0 +1,52 @@
+%% FIXME and FIXMEbeamer : le second indique qqch à arranger au moment de faire le beamer pour la présentation orale !
+
+% Pour compiler : LaTeXmk (avec lualatex) et lancer gnuplot sur chacun des fichier .gnuplot si nécessaire, et re latexmk
+% Le pdf se trouvera dans auxfiles (cf fichier latexmkrc)
+
+% donc ceci devrait marcher :
+%latexmk -lualatex MATH-F-112.tex
+%pushd auxfiles; for i in *gnuplot; do gnuplot  $i; done; popd
+%latexmk -g -lualatex MATH-F-112.tex
+%% N.B. s'assurer que asymptote et gnuplot sont bien installés.
+
+\documentclass[a4paper, french]{memoir}
+\usepackage{DivideInFiles}
+\usepackage{hyperref}
+\AtBeginDocument{\pagenumbering{arabic}\let\yfsavedthepage\thepage}
+
+\makeatletter
+\newenvironment{Module}[1]{
+\yf@splitfiles@nextfile % Takes care of \cleardoublepage
+\renewcommand{\thepage}{#1-\yfsavedthepage}%
+\setcounter{page}{1}
+\hypertarget{part.#1}{}
+  \thispagestyle{empty}
+  \begin{center}\centering
+    \Huge Module #1
+
+  \end{center}
+  \addtocontents{toc}{\protect\contentsline {part}{Module #1}{}{part.#1}}
+}{% fin environnement Module :
+}
+\makeatother
+\begin{document}
+
+\begin{Module}{A}
+\chapter{foo}
+  blah blah
+\end{Module}
+
+\begin{Module}{T}
+\chapter{bar}
+  blah blah
+\end{Module}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "MATH-F-112"
+%%% TeX-shell-escape-mode: t
+%%% coding: utf-8-unix
+%%% TeX-engine: luatex
+%%% End:

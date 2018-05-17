@@ -1,0 +1,66 @@
+%% FIXME: use dtxtut to make an .ins and a .dtx
+
+%% This file allows one to split her pdf into multiples pdfs, each corresponding
+%% to one part of the original pdf. Links between part will thus become
+%% inoperent -- the main purpose of doing this is to make it easy for people to
+%% review individual parts without having to bother checking the page
+%% boundaries before printing and distributing the parts.
+
+%% This gives access to the current (physical) page number of the PDF, which is
+%% needed when using pdfpages.
+\RequirePackage{pageslts}
+
+%% The prefix yf@splitfiles@ is used as a poor man's namespacing.
+\newwrite\yf@splitfiles@CurrentFile
+
+%% This is not "namespaced" because it might be useful to refer to the file
+%% number within the document. FIXME: I should perhaps add the prefix and make
+%% an alias depending on an explicit package option.
+\newcounter{file}
+\setcounter{file}{0}
+
+\newcommand{\yf@splitfiles@outputfile}{%
+  \clearpage % Make sure we are on the following page.
+  \ifnum \value{file} < 1 % first file begins now.
+      \ifnum \theCurrentPage = 1
+      % This is the first file that begins, and it begins at page 1, so there's
+      % no preamble to output.
+      \else
+      \yf@splitfiles@writefile{0}% output preamble.
+      \fi
+  \else % non-first file begins : output the previous one.
+  \yf@splitfiles@writefile{\arabic{file}}%
+  \fi
+}
+
+\def\yf@splitfiles@PreviousEndFilePage{}
+\def\yf@splitfiles@nextfile{%
+  \yf@splitfiles@outputfile
+  \cleardoublepage
+  \setcounter{yf@splitfiles@PreviousFilePage}{\theCurrentPage}
+  \refstepcounter{file}
+}
+\AtEndDocument{\yf@splitfiles@outputfile}
+
+\newcounter{yf@splitfiles@PreviousFilePage}
+\setcounter{yf@splitfiles@PreviousFilePage}{1}
+\newcommand{\yf@splitfiles@writefile}[1]{
+  %% \immediate turned out to be required in one case to get the page numbers
+  %% right. I did not check why.
+  \immediate\openout\yf@splitfiles@CurrentFile=\jobname.splitpart.#1.tex\relax
+  \immediate\write\yf@splitfiles@CurrentFile{% écrire
+    \noexpand\documentclass{minimal}^^J
+    \noexpand\usepackage{pdfpages}^^J
+    \noexpand\begin{document}^^J
+      \noexpand\includepdf[fitpaper,pages=\the\numexpr \value{yf@splitfiles@PreviousFilePage}\relax-\the\numexpr\theCurrentPage-1\relax]{\jobname.pdf}^^J
+      \noexpand\end{document}^^J
+  }
+  \immediate\closeout\yf@splitfiles@CurrentFile
+}
+
+%% FIXME : add an option to make the generated files in a subdir.
+
+%% FIXME : add a message stating pdflatex should be run
+
+%% FIXME : add an option to run pdflatex on the generated files if write18 is
+%% available.
